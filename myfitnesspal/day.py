@@ -54,9 +54,12 @@ class Day(MFPBase):
     def date(self):
         return self._date
 
+#BH mod
     @property
     def notes(self):
-        return self._notes()
+        return self._notes
+        #return self._notes()
+#End mod
 
     @property
     def water(self):

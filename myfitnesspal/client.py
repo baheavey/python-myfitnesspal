@@ -508,6 +508,9 @@ class Client(MFPBase):
         water = lambda: self._get_water(date)
         exercises = lambda: self._get_exercises(date)
 
+#BH mod
+        notes = self._get_notes_BH(document)
+#end mod
 
         day = Day(
             date=date,
@@ -727,6 +730,12 @@ class Client(MFPBase):
             )
         )
         return Note(result.json()['item'])
+
+#BH mod      
+    def _get_notes_BH(self, document):
+    		note = document.xpath('//div[@id="note"]/p[1]/text()')
+    		return note
+#End mod
 
     def _get_water(self, date):
         result = self._get_request_for_url(
