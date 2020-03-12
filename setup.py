@@ -8,8 +8,8 @@ with open('requirements.txt', 'r') as in_:
 
 setup(
     name='myfitnesspal',
-    version='1.13.4',
-    url='http://github.com/coddingtonbear/python-myfitnesspal/',
+    version='1.13.5',
+    url='http://github.com/baheavey/python-myfitnesspal/',
     description='Access health and fitness data stored in Myfitnesspal',
     author='Adam Coddington',
     author_email='me@adamcoddington.net',
