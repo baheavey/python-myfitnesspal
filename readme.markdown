@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/coddingtonbear/python-myfitnesspal.png?branch=master)](https://travis-ci.org/coddingtonbear/python-myfitnesspal)  [![Join the chat at https://gitter.im/coddingtonbear/python-myfitnesspal](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/coddingtonbear/python-myfitnesspal?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+![](https://github.com/coddingtonbear/python-myfitnesspal/workflows/Run%20Tests/badge.svg)  [![Join the chat at https://gitter.im/coddingtonbear/python-myfitnesspal](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/coddingtonbear/python-myfitnesspal?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 MyFitnessPal
 ============
@@ -36,7 +36,11 @@ myfitnesspal store-password my_username
 
 You will immediately be asked for your password, and that password will be stored in your system keyring for later interactions with MyFitnessPal.
 
-Please note that all examples below *assume* you've stored your password in your system keyring like above, but you can (as before) provide your password to the module directly as its second argument.
+Please note that all examples below *assume* you've stored your password in your system keyring like above, but you can also provide your password by providing your password as a keyword argument to the `myfitnesspal.Client` instance:
+
+```python
+client = myfitnesspal.Client('my_username', password='my_password')
+```
 
 Diary Examples
 --------------
@@ -131,6 +135,17 @@ spaghetti.totals
 #     'protein': 21,
 #     'sodium': 0,
 #     'sugar': 3}
+```
+
+Accessing a friend's diary
+--------------------------
+
+If a friend has their diary visibility set to public, you can grab their diary entries:
+
+```python
+friend_day = client.get_date(2020, 8, 23, username="username_of_my_friend")
+>>> friend_day
+<08/23/20 {'calories': 891.0, 'carbohydrates': 105.0, 'fat': 38.0, 'protein': 29.0, 'sodium': 0.0, 'sugar': 2.0}>
 ```
 
 Measurement Examples
