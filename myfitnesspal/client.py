@@ -345,6 +345,78 @@ class Client(MFPBase):
 
         return meals
 
+    def _get_meals_bh(self, document):
+        meals = []
+        fields = []
+        entries = []
+        meal_name = None
+    
+        food_log_table = document.xpath("//table[@id='food']")
+    
+        if food_log_table:
+            for row in food_log_table[0].xpath(".//tr"):
+                tds = row.findall('td')
+    
+                # Table header row    
+                if tds[0].text.lower() == 'foods':
+                    # Extract all column headers
+                    for td in tds:
+                        fields.append(self._get_full_name(td.text))
+    
+                # Final row in food log table
+                elif tds[0].text.lower() == 'total:':
+                    # Add final meal to list
+                    if entries:
+                        meals.append(
+                            Meal(
+                                meal_name,
+                                entries,
+                            )
+                        )
+    
+                # Rows with a 'class' attribute of 'title' are individual meal headers
+                elif 'class' in row.attrib:
+                    # If a previous meal has been extracted add it to meals list and clear entries list for next meal
+                    if entries:
+                        meals.append(
+                            Meal(
+                                meal_name,
+                                entries,
+                            )
+                        )
+                        entries = []
+                    # Extract meal name
+                    meal_name = tds[0].text.lower()
+    
+                # All other rows are food log entries
+                else:
+                    # Extract food item name
+                    name = tds[0].text
+                    nutrition = {}
+                    # Extract nutrition facts for this food item
+                    for n in range(1, len(tds)):
+                        column = tds[n].text
+                        try:
+                            nutr_name = fields[n]
+                        except IndexError:
+                            continue
+    
+                        value = self._get_numeric(column)
+    
+                        nutrition[nutr_name] = self._get_measurement(
+                            nutr_name,
+                            int(value)
+                        )
+                    # Add food log entry to list
+                    entries.append(
+                        Entry(
+                            name,
+                            nutrition,
+                        )
+                    )
+    
+        return meals
+
     def _get_url_for_exercise(self, date: datetime.date, username: str) -> str:
         date_str = date.strftime("%Y-%m-%d")
         return (
@@ -480,10 +552,68 @@ class Client(MFPBase):
 
         # Since this data requires an additional request, let's just
         # allow the day object to run the request if necessary.
-        notes = lambda: self._get_notes(date)  # noqa: E731
+        
+        #BH mod
+        #notes = lambda: self._get_notes(date)  # noqa: E731
+        notes = self._get_notes_BH(document)
+        #end mod
+        
         water = lambda: self._get_water(date)  # noqa: E731
         exercises = lambda: self._get_exercises(date)  # noqa: E731
+        
+        day = Day(
+            date=date,
+            meals=meals,
+            goals=goals,
+            notes=notes,
+            water=water,
+            exercises=exercises,
+            complete=complete
+        )
 
+        return day
+
+    def get_date_bh(self, *args, **kwargs):
+        if len(args) == 3:
+            date = datetime.date(
+                int(args[0]),
+                int(args[1]),
+                int(args[2]),
+            )
+        elif len(args) == 1 and isinstance(args[0], datetime.date):
+            date = args[0]
+        else:
+            raise ValueError(
+                'get_date accepts either a single datetime or date instance, '
+                'or three integers representing year, month, and day '
+                'respectively.'
+            )
+
+    # BH mod
+        printable_diary_document = self._get_document_for_url(parse.urljoin(self.BASE_URL_SECURE,'reports/printable_diary/' + kwargs.get('username', self.effective_username)) + '?from=%s&to=%s' % (date.strftime('%Y-%m-%d'), date.strftime('%Y-%m-%d')))
+        # Old URL scheme
+        document = self._get_document_for_url(
+            self._get_url_for_date(
+                date,
+                kwargs.get('username', self.effective_username)
+            )
+        )
+
+        meals = self._get_meals_bh(printable_diary_document)
+        #meals = self._get_meals(document)
+
+        goals = self._get_goals(document)
+        complete = self._get_completion(document)
+
+        # Since this data requires an additional request, let's just
+        # allow the day object to run the request if necessary.
+        notes = lambda: self._get_notes(date)
+        water = lambda: self._get_water(date)
+        exercises = lambda: self._get_exercises(date)
+
+        notes = self._get_notes_BH(document)
+    #end mod
+        
         day = Day(
             date=date,
             meals=meals,
@@ -495,6 +625,8 @@ class Client(MFPBase):
         )
 
         return day
+
+
 
     def get_measurements(
         self, measurement="Weight", lower_bound=None, upper_bound=None
@@ -663,6 +795,12 @@ class Client(MFPBase):
             + "?date={date}".format(date=date.strftime("%Y-%m-%d"))
         )
         return Note(result.json()["item"])
+        
+    #BH mod      
+    def _get_notes_BH(self, document):
+            note = document.xpath('//div[@id="note"]/p[1]/text()')
+            return note
+    #End mod
 
     def _get_water(self, date: datetime.date) -> float:
         result = self._get_request_for_url(
